@@ -5,9 +5,10 @@ import Heading from "./_components/Heading";
 import { Button, Textarea, Snippet, Tooltip } from "@nextui-org/react";
 import { apiGet, apiPost, apiDelete } from "./_components/api";
 import { usePrompt } from "./_components/PromptContext";
-import { InboxOutlined, TeamOutlined } from "@ant-design/icons";
+import { InboxOutlined, TeamOutlined, GithubOutlined } from "@ant-design/icons";
 import toast from "react-hot-toast";
 import ActionButton from "./_components/ActionButton";
+
 export default function Home() {
   const prompt = usePrompt();
   const [stage, setStage] = useState<
@@ -125,6 +126,16 @@ export default function Home() {
             }}
           >
             <TeamOutlined />
+          </Button>
+        </Tooltip>
+        <Tooltip content="View on GitHub" placement="left">
+          <Button
+            isIconOnly
+            onClick={() =>
+              window.open("https://github.com/hermesloom/matchmind", "_blank")
+            }
+          >
+            <GithubOutlined />
           </Button>
         </Tooltip>
       </div>
