@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { query } from "../_common/query";
 import { Pinecone } from "@pinecone-database/pinecone";
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY as string,
-});
 
 export async function GET(req: NextRequest) {
   const secretKey = req.nextUrl.searchParams.get("secretKey");
@@ -33,6 +30,9 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const pinecone = new Pinecone({
+    apiKey: process.env.PINECONE_API_KEY as string,
+  });
   const index = pinecone.Index("matchmind");
   const myEmbedding = await index.fetch([submission[0].id]);
   if (!myEmbedding.records[submission[0].id]) {

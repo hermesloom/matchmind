@@ -5,11 +5,6 @@ import { Pinecone } from "@pinecone-database/pinecone";
 import { OpenAI } from "openai";
 import { v4 as uuidv4 } from "uuid";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY as string,
-});
-
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) {
@@ -30,6 +25,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const pinecone = new Pinecone({
+    apiKey: process.env.PINECONE_API_KEY as string,
+  });
+
   const { text } = await req.json();
   const supabase = await createClient();
 
@@ -57,6 +57,10 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const pinecone = new Pinecone({
+    apiKey: process.env.PINECONE_API_KEY as string,
+  });
+
   const { id } = await req.json();
   const supabase = await createClient();
   await query(() => supabase.from("submissions").delete().eq("id", id));
