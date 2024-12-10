@@ -3,6 +3,7 @@ import React from "react";
 import { Metadata, Viewport } from "next";
 import clsx from "clsx";
 import { Toaster } from "react-hot-toast";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 import { Providers } from "./providers";
 
@@ -42,6 +43,7 @@ export default function RootLayout({
           fontMono.variable
         )}
       >
+        <GoogleAnalytics gaId="G-K9KEP0T1MC" />
         <Providers>
           <Toaster position="bottom-center" />
           {children}
