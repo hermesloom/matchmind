@@ -58,7 +58,7 @@ export default function Home() {
   const loadMatches = async () => {
     setMatchesLoading(true);
     try {
-      const matches = await apiGet("/matches", { secretKey, topK: 10 });
+      const matches = await apiGet("/matches", { secretKey, topK: 20 });
       setMatches(matches);
     } catch (e: any) {
       setStage("submit");
@@ -113,8 +113,8 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-3 py-32 max-w-md mx-auto">
-      <div className="fixed top-4 right-4 flex flex-col gap-2">
-        <Tooltip content="Edit submission" placement="left">
+      <div className="fixed top-4 right-4 flex flex-row gap-2">
+        <Tooltip content="Edit submission" placement="bottom">
           <Button
             isIconOnly
             isLoading={editLoading}
@@ -178,7 +178,7 @@ export default function Home() {
             <EditOutlined />
           </Button>
         </Tooltip>
-        <Tooltip content="View private messages" placement="left">
+        <Tooltip content="View private messages" placement="bottom">
           <Button
             isIconOnly
             onClick={async () => {
@@ -190,7 +190,7 @@ export default function Home() {
             <InboxOutlined />
           </Button>
         </Tooltip>
-        <Tooltip content="View matches" placement="left">
+        <Tooltip content="View matches" placement="bottom">
           <Button
             isIconOnly
             onClick={async () => {
@@ -202,7 +202,7 @@ export default function Home() {
             <TeamOutlined />
           </Button>
         </Tooltip>
-        <Tooltip content="GitHub" placement="left">
+        <Tooltip content="GitHub" placement="bottom">
           <Button
             isIconOnly
             onClick={() =>
@@ -217,8 +217,10 @@ export default function Home() {
       {stage === "submit" && (
         <>
           <Heading>
-            What's one thing where you normally feel least understood?
+            In which ways do you normally feel <b>least</b> understood by
+            everyone you know?
           </Heading>
+          <p className="self-start text-sm">Write about one paragraph.</p>
           <Textarea
             className="w-full mt-4"
             minRows={4}
@@ -252,8 +254,9 @@ export default function Home() {
         <>
           <Heading>The secret key for your submission is:</Heading>
           <Snippet symbol="">{secretKey}</Snippet>
-          <p className="mt-4">
-            Store it, in case you want to keep access to it.
+          <p className="mt-4 text-sm self-start">
+            Store it, in case you want to be able to see the private messages
+            others might send to it.
           </p>
           <Button
             color="primary"
@@ -267,10 +270,12 @@ export default function Home() {
       )}
       {stage === "showMatches" && (
         <>
-          <Heading>
-            These people responded similarly. Click on one to send them a
-            message.
+          <Heading className="self-start">
+            These people responded similarly.
           </Heading>
+          <p className="self-start text-sm">
+            Click on one to send them a message.
+          </p>
           {matchesLoading ? null : matches.length > 0 ? (
             matches.map((m) => (
               <Textarea
