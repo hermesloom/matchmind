@@ -29,7 +29,7 @@ export default function Home() {
   const [secretKey, setSecretKey] = useState<string | null>(null);
 
   const askForSecretKey = async () => {
-    const result = await prompt("Enter your secret key", [
+    const result = await prompt("Enter your secret key.", [
       {
         key: "secretKey",
         label: "Secret key",
@@ -48,6 +48,8 @@ export default function Home() {
         toSecretKey: secretKey,
       });
       setMessages(messages);
+    } catch (e: any) {
+      setStage("submit");
     } finally {
       setMessagesLoading(false);
     }
@@ -58,6 +60,8 @@ export default function Home() {
     try {
       const matches = await apiGet("/matches", { secretKey, topK: 10 });
       setMatches(matches);
+    } catch (e: any) {
+      setStage("submit");
     } finally {
       setMatchesLoading(false);
     }
@@ -115,7 +119,7 @@ export default function Home() {
             isIconOnly
             isLoading={editLoading}
             onClick={async () => {
-              const secretKey = await prompt("Enter your secret key", [
+              const secretKey = await prompt("Enter your secret key.", [
                 {
                   key: "secretKey",
                   label: "Secret key",
@@ -128,7 +132,6 @@ export default function Home() {
               setEditLoading(true);
               let submission: any;
               try {
-                await new Promise((resolve) => setTimeout(resolve, 1000));
                 submission = await apiGet("/submission", {
                   secretKey: secretKey.secretKey,
                 });
@@ -136,7 +139,7 @@ export default function Home() {
                 setEditLoading(false);
               }
               const newSubmission = await prompt(
-                "Edit your submission or clear all text to remove it.",
+                "Edit your submission or clear all text to remove it and all private messages associated with it.",
                 [
                   {
                     key: "text",

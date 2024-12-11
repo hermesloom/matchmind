@@ -8,15 +8,13 @@ import {
   generateEmbedding,
   fetchEmbedding,
 } from "../_common/utils";
+import { handler } from "../_common/handler";
 
-export async function GET(req: NextRequest) {
+export const GET = handler(async (req: NextRequest) => {
   const id = req.nextUrl.searchParams.get("id");
   const secretKey = req.nextUrl.searchParams.get("secretKey");
   if (!id && !secretKey) {
-    return NextResponse.json(
-      { error: "id or secretKey is required" },
-      { status: 400 }
-    );
+    throw new Error("id or secretKey is required");
   }
 
   if (id) {
@@ -25,10 +23,7 @@ export async function GET(req: NextRequest) {
       supabase.from("submissions").select().eq("id", id)
     );
     if (submission.length === 0) {
-      return NextResponse.json(
-        { error: "submission not found" },
-        { status: 400 }
-      );
+      throw new Error("submission not found");
     }
     return NextResponse.json(submission[0]);
   } else if (secretKey) {
@@ -37,9 +32,9 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({});
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = handler(async (req: NextRequest) => {
   const pinecone = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY as string,
   });
@@ -65,9 +60,9 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ secretKey });
-}
+});
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = handler(async (req: NextRequest) => {
   const { secretKey, text } = await req.json();
   const submission = await getSubmissionBySecretKey(secretKey);
   if (submission.text === text) {
@@ -80,6 +75,12 @@ export async function PATCH(req: NextRequest) {
   });
 
   if (text === "") {
+    await query(() =>
+      supabase.from("messages").delete().eq("to_submission_id", submission.id)
+    );
+    await query(() =>
+      supabase.from("messages").delete().eq("from_submission_id", submission.id)
+    );
     await query(() =>
       supabase.from("submissions").delete().eq("id", submission.id)
     );
@@ -96,4 +97,4 @@ export async function PATCH(req: NextRequest) {
   }
 
   return NextResponse.json({});
-}
+});

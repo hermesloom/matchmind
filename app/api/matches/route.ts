@@ -3,29 +3,24 @@ import { createClient } from "@/utils/supabase/server";
 import { query } from "../_common/query";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { getSubmissionBySecretKey, fetchEmbedding } from "../_common/utils";
+import { handler } from "../_common/handler";
 
-export async function GET(req: NextRequest) {
+export const GET = handler(async (req: NextRequest) => {
   const secretKey = req.nextUrl.searchParams.get("secretKey");
   if (!secretKey) {
-    return NextResponse.json(
-      { error: "secretKey is required" },
-      { status: 400 }
-    );
+    throw new Error("secretKey is required");
   }
 
   const topKStr = req.nextUrl.searchParams.get("topK");
   if (!topKStr || isNaN(parseInt(topKStr))) {
-    return NextResponse.json({ error: "topK is required" }, { status: 400 });
+    throw new Error("topK is required");
   }
   const topK = parseInt(topKStr);
 
   const submission = await getSubmissionBySecretKey(secretKey);
   const embedding = await fetchEmbedding(submission.id);
   if (!embedding) {
-    return NextResponse.json(
-      { error: "embedding for submission not found: " + submission.id },
-      { status: 400 }
-    );
+    throw new Error("embedding for submission not found: " + submission.id);
   }
 
   const pinecone = new Pinecone({
@@ -49,8 +44,15 @@ export async function GET(req: NextRequest) {
   );
 
   return NextResponse.json(
-    similarSubmissions
+    matches.matches
+      .filter((m) => m.id !== submission.id)
+      .map((m) => {
+        const submission = similarSubmissions.find((s: any) => s.id === m.id);
+        if (submission) {
+          return { id: submission.id, text: submission.text };
+        }
+      })
+      .filter((x) => !!x)
       .slice(0, topK)
-      .map((s: any) => ({ id: s.id, text: s.text }))
   );
-}
+});
