@@ -55,9 +55,9 @@ export const POST = handler(async (req: NextRequest) => {
 
   const embedding = await generateEmbedding(text);
   pinecone.Index("matchmind").upsert([{ id: submissionId, values: embedding }]);
-  /*while (!(await fetchEmbedding(submissionId))) {
+  while (!(await fetchEmbedding(submissionId))) {
     await new Promise((resolve) => setTimeout(resolve, 500));
-  }*/
+  }
 
   return NextResponse.json({ secretKey });
 });
