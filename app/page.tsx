@@ -255,8 +255,8 @@ export default function Home() {
           <Heading>The secret key for your submission is:</Heading>
           <Snippet symbol="">{secretKey}</Snippet>
           <p className="mt-4 text-sm self-start">
-            Store it, in case you want to be able to see the private messages
-            others might send to it.
+            Store it, in case you want to be able to edit it later and see the
+            private messages others might send to it.
           </p>
           <Button
             color="primary"
