@@ -3,9 +3,14 @@
 import React, { useEffect, useState } from "react";
 import Heading from "./_components/Heading";
 import { Button, Textarea, Snippet, Tooltip } from "@nextui-org/react";
-import { apiGet, apiPost, apiDelete } from "./_components/api";
+import { apiGet, apiPost, apiDelete, apiPatch } from "./_components/api";
 import { usePrompt } from "./_components/PromptContext";
-import { InboxOutlined, TeamOutlined, GithubOutlined } from "@ant-design/icons";
+import {
+  InboxOutlined,
+  TeamOutlined,
+  GithubOutlined,
+  EditOutlined,
+} from "@ant-design/icons";
 import toast from "react-hot-toast";
 import ActionButton from "./_components/ActionButton";
 
@@ -18,6 +23,7 @@ export default function Home() {
   const [submissionLoading, setSubmissionLoading] = useState(false);
   const [matchesLoading, setMatchesLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
   const [matches, setMatches] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [secretKey, setSecretKey] = useState<string | null>(null);
@@ -104,6 +110,71 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-3 py-32 max-w-md mx-auto">
       <div className="fixed top-4 right-4 flex flex-col gap-2">
+        <Tooltip content="Edit submission" placement="left">
+          <Button
+            isIconOnly
+            isLoading={editLoading}
+            onClick={async () => {
+              const secretKey = await prompt("Enter your secret key", [
+                {
+                  key: "secretKey",
+                  label: "Secret key",
+                },
+              ]);
+              if (!secretKey) {
+                return;
+              }
+
+              setEditLoading(true);
+              let submission: any;
+              try {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                submission = await apiGet("/submission", {
+                  secretKey: secretKey.secretKey,
+                });
+              } finally {
+                setEditLoading(false);
+              }
+              const newSubmission = await prompt(
+                "Edit your submission or clear all text to remove it.",
+                [
+                  {
+                    key: "text",
+                    multiLine: true,
+                    defaultValue: submission.text,
+                    canBeEmpty: true,
+                  },
+                ]
+              );
+              if (newSubmission) {
+                setEditLoading(true);
+                try {
+                  await toast.promise(
+                    apiPatch("/submission", {
+                      secretKey: secretKey.secretKey,
+                      text: newSubmission.text,
+                    }),
+                    newSubmission.text
+                      ? {
+                          loading: "Updating submission...",
+                          success: "Submission updated!",
+                          error: "Failed to update submission",
+                        }
+                      : {
+                          loading: "Deleting submission...",
+                          success: "Submission deleted!",
+                          error: "Failed to delete submission",
+                        }
+                  );
+                } finally {
+                  setEditLoading(false);
+                }
+              }
+            }}
+          >
+            <EditOutlined />
+          </Button>
+        </Tooltip>
         <Tooltip content="View private messages" placement="left">
           <Button
             isIconOnly
@@ -128,7 +199,7 @@ export default function Home() {
             <TeamOutlined />
           </Button>
         </Tooltip>
-        <Tooltip content="View on GitHub" placement="left">
+        <Tooltip content="GitHub" placement="left">
           <Button
             isIconOnly
             onClick={() =>

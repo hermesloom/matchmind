@@ -2,30 +2,44 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { query } from "../_common/query";
 import { Pinecone } from "@pinecone-database/pinecone";
-import { OpenAI } from "openai";
 import { v4 as uuidv4 } from "uuid";
+import {
+  getSubmissionBySecretKey,
+  generateEmbedding,
+  fetchEmbedding,
+} from "../_common/utils";
 
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
-  if (!id) {
-    return NextResponse.json({ error: "id is required" }, { status: 400 });
-  }
-  const supabase = await createClient();
-  const submission = await query(() =>
-    supabase.from("submissions").select().eq("id", id)
-  );
-  if (submission.length === 0) {
+  const secretKey = req.nextUrl.searchParams.get("secretKey");
+  if (!id && !secretKey) {
     return NextResponse.json(
-      { error: "submission not found" },
+      { error: "id or secretKey is required" },
       { status: 400 }
     );
   }
 
-  return NextResponse.json(submission[0]);
+  if (id) {
+    const supabase = await createClient();
+    const submission = await query(() =>
+      supabase.from("submissions").select().eq("id", id)
+    );
+    if (submission.length === 0) {
+      return NextResponse.json(
+        { error: "submission not found" },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json(submission[0]);
+  } else if (secretKey) {
+    const submission = await getSubmissionBySecretKey(secretKey);
+    return NextResponse.json(submission);
+  }
+
+  return NextResponse.json({});
 }
 
 export async function POST(req: NextRequest) {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const pinecone = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY as string,
   });
@@ -44,26 +58,42 @@ export async function POST(req: NextRequest) {
     )
   ).id;
 
-  const embeddingResponse = await openai.embeddings.create({
-    model: "text-embedding-3-small",
-    input: text,
-    encoding_format: "float",
-  });
-  const embedding = embeddingResponse.data[0].embedding;
+  const embedding = await generateEmbedding(text);
   pinecone.Index("matchmind").upsert([{ id: submissionId, values: embedding }]);
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  while (!(await fetchEmbedding(submissionId))) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
 
   return NextResponse.json({ secretKey });
 }
 
-export async function DELETE(req: NextRequest) {
+export async function PATCH(req: NextRequest) {
+  const { secretKey, text } = await req.json();
+  const submission = await getSubmissionBySecretKey(secretKey);
+  if (submission.text === text) {
+    return NextResponse.json({});
+  }
+
+  const supabase = await createClient();
   const pinecone = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY as string,
   });
 
-  const { id } = await req.json();
-  const supabase = await createClient();
-  await query(() => supabase.from("submissions").delete().eq("id", id));
-  pinecone.Index("matchmind").deleteOne(id);
+  if (text === "") {
+    await query(() =>
+      supabase.from("submissions").delete().eq("id", submission.id)
+    );
+    pinecone.Index("matchmind").deleteOne(submission.id);
+  } else {
+    await query(() =>
+      supabase.from("submissions").update({ text }).eq("id", submission.id)
+    );
+
+    const newEmbedding = await generateEmbedding(text);
+    pinecone
+      .Index("matchmind")
+      .upsert([{ id: submission.id, values: newEmbedding }]);
+  }
+
   return NextResponse.json({});
 }

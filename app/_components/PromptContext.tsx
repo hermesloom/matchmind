@@ -29,7 +29,7 @@ export function PromptProvider({ children }: { children: React.ReactNode }) {
 
             // small delay to allow the closing animation to play
             setTimeout(() => {
-              setActivePrompts(activePrompts.filter((p) => p.id !== id));
+              setActivePrompts((prompts) => prompts.filter((p) => p.id !== id));
             }, 500);
           },
         },

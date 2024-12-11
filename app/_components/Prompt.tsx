@@ -16,6 +16,7 @@ export type PromptField = {
   multiLine?: boolean;
   defaultValue?: string;
   readOnly?: boolean;
+  canBeEmpty?: boolean;
   options?: {
     id: string;
     label: string;
@@ -101,7 +102,7 @@ export default function Prompt({ config }: { config: PromptConfig }) {
             color="primary"
             isDisabled={config.fields?.some(
               (field) =>
-                !inputs[field.key] ||
+                (!field.canBeEmpty && !inputs[field.key]) ||
                 (field.validate && !field.validate(inputs[field.key]))
             )}
             onClick={() => {

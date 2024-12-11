@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { query } from "../_common/query";
 import { Pinecone } from "@pinecone-database/pinecone";
+import { getSubmissionBySecretKey, fetchEmbedding } from "../_common/utils";
 
 export async function GET(req: NextRequest) {
   const secretKey = req.nextUrl.searchParams.get("secretKey");
@@ -18,14 +19,11 @@ export async function GET(req: NextRequest) {
   }
   const topK = parseInt(topKStr);
 
-  const supabase = await createClient();
-
-  const submission = await query(() =>
-    supabase.from("submissions").select().eq("secret_key", secretKey)
-  );
-  if (submission.length === 0) {
+  const submission = await getSubmissionBySecretKey(secretKey);
+  const embedding = await fetchEmbedding(submission.id);
+  if (!embedding) {
     return NextResponse.json(
-      { error: "submission not found" },
+      { error: "embedding for submission not found: " + submission.id },
       { status: 400 }
     );
   }
@@ -34,26 +32,19 @@ export async function GET(req: NextRequest) {
     apiKey: process.env.PINECONE_API_KEY as string,
   });
   const index = pinecone.Index("matchmind");
-  const myEmbedding = await index.fetch([submission[0].id]);
-  if (!myEmbedding.records[submission[0].id]) {
-    return NextResponse.json(
-      { error: "embedding for submission not found: " + submission[0].id },
-      { status: 400 }
-    );
-  }
-
   const matches = await index.query({
-    vector: myEmbedding.records[submission[0].id].values,
+    vector: embedding,
     topK: topK + 1,
   });
 
+  const supabase = await createClient();
   const similarSubmissions = await query(() =>
     supabase
       .from("submissions")
       .select()
       .in(
         "id",
-        matches.matches.map((m) => m.id).filter((id) => id !== submission[0].id)
+        matches.matches.map((m) => m.id).filter((id) => id !== submission.id)
       )
   );
 
