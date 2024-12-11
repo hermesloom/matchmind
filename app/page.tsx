@@ -217,7 +217,7 @@ export default function Home() {
       {stage === "submit" && (
         <>
           <Heading>
-            In which ways do you normally feel <b>least</b> understood by
+            In which ways do you normally feel <b>least understood</b> by
             everyone you know?
           </Heading>
           <p className="self-start text-sm">Write about one paragraph.</p>

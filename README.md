@@ -17,7 +17,7 @@ Currently, the steps for local development are:
 7. `npm run dev`
 8. You can change the prompt in `app/page.tsx`.
 
-For cloning and deploying one's own instance with another prompt, it should be much simpler. Setup should be as trivial as possible, so that everyone can deploy their own instance. My vision here is as follows:
+For cloning and deploying one's own instance with another prompt, the process should become much simpler. Setup should be as trivial as possible, so that everyone can deploy their own instance. My vision here is as follows:
 
 1. The first thing the user should need to do is to create an account at fly.io.
 2. There should be a single script in this directory which does everything with a single command, including self-hosted Supabase, self-hosted vector database and Next.js setup.
