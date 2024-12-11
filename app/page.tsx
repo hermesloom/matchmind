@@ -287,7 +287,7 @@ export default function Home() {
                 value={m.text}
                 onClick={async () => {
                   const resp = await prompt(
-                    "Write a message to the person that submitted this. They will see what you submitted before.",
+                    "Write a message to the person that submitted this. They will also see your submission.",
                     [
                       {
                         key: "message",
